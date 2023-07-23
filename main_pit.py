@@ -8,7 +8,7 @@ import math
 import logging
 
 #----------------------------------------------Configure logging----------------------------------------------
-logging.basicConfig(filename='pit_data.log', level=logging.INFO, format='\n%(asctime)s, %(message)s')
+#logging.basicConfig(filename='pit_data.log', level=logging.INFO, format='\n%(asctime)s, %(message)s')
 
 
 # ----------------------------------------------Create the root window----------------------------------------------
@@ -22,14 +22,18 @@ root.title("TDR - SDC")
 screen_width, screen_height = root.winfo_screenwidth(), root.winfo_screenheight()
 # screen_height = int(round((screen_height*2)/7, 0))
 # screen_width = int(round((screen_width*5)/15, 0))
-print(screen_width, screen_height)
+#print(screen_width, screen_height)
+actual_screen_height = screen_height
+screen_height = int(round((actual_screen_height * 28)/30, 0))
 
 root.geometry("%dx%d" % (screen_width, screen_height))
 
-#make bg dimentions equal to window
+#make bg dimentions equal to window 
 bg_image_pg1 = Image.open("pit display.png")
 if bg_image_pg1.size != (screen_width, screen_height):
-    bg_image_pg1 = bg_image_pg1.resize((screen_width, screen_height), Image.ANTIALIAS)
+    # bg_image_pg1 = bg_image_pg1.resize((screen_width, screen_height), Image.ANTIALIAS) 
+    # antialias method is removed in pillow 10 on july 2023
+    bg_image_pg1 = bg_image_pg1.resize((screen_width, screen_height), Image.Resampling.LANCZOS) 
 bg_image_pg1 = ImageTk.PhotoImage(bg_image_pg1)
 
 ##Adding background image in form of a label
@@ -40,10 +44,38 @@ bg_image_pg1 = ImageTk.PhotoImage(bg_image_pg1)
 
 #Adding background image in form of a canvas
 bg_canvas_pg1 = tk.Canvas(root, width=screen_width, height=screen_height,bg="red")
-bg_canvas_pg1.place(relx=0, rely=0, anchor="nw")
+bg_canvas_pg1.place(relx=1, y=actual_screen_height+10, anchor="se")
 bg_canvas_pg1.create_image(0, 0, anchor="nw", image=bg_image_pg1)
 
 
+root.attributes('-fullscreen', True)
+
+#----------------------------------------------make canvas for throttle bar----------------------------------------------
+throttle_canvas = tk.Canvas(root, width=int(round((screen_width * 27)/36, 0)), height=int(round((screen_height * 1)/20, 0)),bg="black", borderwidth=0, highlightthickness=0)
+throttle_canvas.place(relx=-0.05, y=int(round((actual_screen_height * 1)/60, 0)), anchor="nw")
+
+throttle_canvas_outer_outline_rectangle = throttle_canvas.create_rectangle(int(round((screen_width * 4)/36, 0)), 0, int(round((screen_width * 23)/36, 0)), int(round((screen_height * 1)/20, 0)),fill="Orange Red", outline="white",width="2", tags="throttle_outline")
+throttle_canvas_inner_outline_rectangle = throttle_canvas.create_rectangle(int(round((screen_width * 9)/72, 0)), 0, int(round((screen_width * 45)/72, 0)), int(round((screen_height * 1)/20, 0)),fill="black", outline="white",width="2", tags="throttle_outline")
+
+throttle_bar_outline_rectangle = throttle_canvas.create_rectangle(int(round((screen_width * 9)/38, 0)), int(round((screen_height * 1)/100, 0)), int(round((screen_width * 43)/72, 0)), int(round((screen_height * 8)/200, 0)),fill="black", outline="white",width="1", tags="throttle_outline")
+
+throttle_canvas.create_text(int(round((screen_width * 16)/72, 0)), int(round((screen_height * 1)/68, 0)), text="THROTTLE ::", font=("areal black", int(round((screen_height * 1)/46, 0))), fill="white",anchor="ne" )
+
+def create_gradient_throttle(current, total):
+            speedometer_bg_outer_gradient_colour = (255,165,0)    # Start color (red)
+            speedometer_bg_inner_gradient_colour = (200,0,0) 
+            r1, g1, b1 = speedometer_bg_outer_gradient_colour
+            r2, g2, b2 = speedometer_bg_inner_gradient_colour
+
+            r = int(r1 + ((r2-r1) * current/total))
+            g = int(g1 + ((g2-g1) * current/total))
+            b = int(b1 + ((b2-b1) * current/total))
+
+            return "#%02x%02x%02x" % (r, g, b)
+        
+for i in range(100):
+    gradient_color = create_gradient_throttle(100-i,100)
+    throttle_canvas.create_rectangle(int(round((screen_width * 64800)/273600, 0))+1, int(round((screen_height * 2)/200, 0))+1, int(round((screen_width * (((100-i)*986)+64800))/273600, 0))-1, int(round((screen_height * 1)/25, 0))-1,fill=gradient_color, outline=gradient_color ,width="1", tags="throttle_outline")
 #----------------------------------------------CREATE DATA DISPLAY LABELS for circular display----------------------------------------------
 # Create label to display pack VOLTAGE
 display_labels_font_style = "RACE SPACE REGULAR"
@@ -69,22 +101,28 @@ label_data_motor_controller_temperature.place(relx=0.47, rely=0.1026, anchor="ce
 
 #----------------------------------------------CREATE DATA DISPLAY LABELS for list display----------------------------------------------
 # Create label to display charge
-label_data_charge = tk.Label(bg_canvas_pg1, text="BP", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_charge = tk.Label(bg_canvas_pg1, text="crg", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
 label_data_charge.place(relx=0.5, rely=0.350, anchor="center")
 # Create label to display battery_max_temperature
-label_data_battery_max_temperature = tk.Label(bg_canvas_pg1, text="FS", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_battery_max_temperature = tk.Label(bg_canvas_pg1, text="maxt", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
 label_data_battery_max_temperature.place(relx=0.59, rely=0.417, anchor="center")
 
 # Create label to display mfr
-label_data_mfr = tk.Label(bg_canvas_pg1, text="LVBS", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_mfr = tk.Label(bg_canvas_pg1, text="mfr", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
 label_data_mfr.place(relx=0.46, rely=0.300, anchor="center")
 # Create label to display battery_min_temperature
-label_data_battery_min_temperature = tk.Label(bg_canvas_pg1, text="TMT", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_battery_min_temperature = tk.Label(bg_canvas_pg1, text="mint", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
 label_data_battery_min_temperature.place(relx=0.6, rely=0.48, anchor="center")
 # Create label to display BPS
-label_data_bps = tk.Label(bg_canvas_pg1, text="TMT", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
-label_data_bps.place(relx=0.465, rely=0.537, anchor="center")  
+label_data_bps = tk.Label(bg_canvas_pg1, text="bps", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_bps.place(relx=0.47, rely=0.537, anchor="center")  
 
+# Create label to display AC CURRENT
+label_data_AC_current = tk.Label(bg_canvas_pg1, text="AC", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_AC_current.place(relx=0.537, rely=0.59, anchor="center")  
+# Create label to display DC CURRENT
+label_data_DC_current = tk.Label(bg_canvas_pg1, text="DC", font=(display_labels_font_style, int(round((screen_width * 1)/60, 0))), bg="black", fg=list_display_labels_font_color)
+label_data_DC_current.place(relx=0.545, rely=0.658, anchor="center")  
 #----------------------------------------------CREATE Fault DISPLAY LABELS----------------------------------------------
 # # Create label to display MOTOR controller faults
 # label_data_motor_controller_fault = tk.Label(bg_canvas_pg1, text="FAULT", font=(display_labels_font_style, 20), bg="black", fg="red")
@@ -152,7 +190,7 @@ for i in range(int(round((screen_height * 1)/3, 0))):
         graph_3_canvas.create_line(0, y,  int(round((screen_height * 1), 0)), y, width=1, fill="LightGoldenrod4")
 
 
-#----------------------------------------------make liat of graph data to prevent errors in update_data function ----------------------------------------------
+#----------------------------------------------make list of graph data to prevent errors in update_data function ----------------------------------------------
 plot_1_data = [0,5,3,2,8,1]
 plot_2_data = [0,5,3,2,8,1]
 plot_3_data = [0,5,3,2,8,1]
@@ -171,7 +209,6 @@ rpm_dial_canvas = tk.Canvas(root, width=speedometer_canvas_width/2, height=speed
 #rpm_dial_canvas.place(x=((screen_width*2)/3)-speedometer_canvas_width-10, rely=1, anchor="se")
 rpm_dial_canvas.place(relx=0.66, rely=1, anchor="se")
 rpm_dial_canvas.create_text(rpm_canvas_width/2, rpm_canvas_height- int(round((screen_height * 1)/45, 0)), text="RPM", font=("areal black", int(round((screen_height * 1)/46, 0))), fill="white")
-
 
 #----------------------------------------------make speedometer bg on the canvas----------------------------------------------
 speedometer_radius = int(speedometer_canvas_width/2)
@@ -253,7 +290,11 @@ for char in rpm_list:
 #----------------------------------------------data updation on main window----------------------------------------------
 def update_data():
     
-    raw_data = '0,1,2,3,4,5,6,7,8,9,10,no mc fault a :no mc fault b:no mc fault c:no mc fault d; no bms fault a : no bms fault b: no bms fault c: no bms fault d'
+    raw_data = '000,100,2000,30,400,500,600,700,800,900,1000,110,120,13.57,140,150,160,no mc fault a :no mc fault b:no mc fault c:no mc fault d; no bms fault a : no bms fault b: no bms fault c: no bms fault d'
+    # data order - 0. motor temp  1.mc temp  2.erpm  3.throttle  4.pack current  5.pack voltage  6.charge  7.battery max temp
+    #              8.battery min temp  9.mfr  10.bps  11.ac current  12.dc current  13.speed  
+    #              14.MC input voltage  15.MC input current  16.LV battery voltage
+    #              1.mc faults  2.bms faults
     # raw_data  = ser.readline().decode()
     
     #convert raw data into usable form
@@ -273,20 +314,23 @@ def update_data():
     # bms_faults_string_arranged = '\n'.join(bms_faults_list)
     # mc_faults_string_arranged = '\n'.join(mc_faults_list)
     
-    #calculate speed using erpm and radius of tyres
-    erpm = int(data[2])
-    tyre_radius = 20/1000 
-    tyre_circumference = 2*3.14*tyre_radius
-    current_vehicle_calculated_speed = ((erpm/10)*tyre_circumference*60)
-    current_vehicle_calculated_speed = int(round(current_vehicle_calculated_speed, 0))
+    # #-------------------------calculate speed using erpm and radius of tyres--------------------------
+    # erpm = int(data[2])
+    # tyre_radius = 20/1000 
+    # tyre_circumference = 2*3.14*tyre_radius
+    # current_vehicle_calculated_speed = ((erpm/10)*tyre_circumference*60)
+    # current_vehicle_calculated_speed = int(round(current_vehicle_calculated_speed, 0))
+    # #became useless when speed was directly calculated in the arduino code 
     
-    if len(data) == 12:
+    if len(data) >= 10:
         #----------------------------------------------data loggging----------------------------------------------
-        data_to_be_logged = f"\nmotor_temperature:{data[0]}, motor_controller_temperature:{data[1]}, rpm:{data[2]}, throttle:{data[3]},\npack_current:{data[4]}, pack_voltage:{data[5]}, charge:{data[6]},\nbattery_max_temperature:{data[7]}, label_data_battery_min_temperature:{data[8]},\nmfr:{data[9]}, bps:{data[10]}, speed:{current_vehicle_calculated_speed},\nmc_faults:{fault_list[0]},\nbms_faults:{fault_list[1]}"
-        logging.info(data_to_be_logged)
+        #data_to_be_logged = f"\nmotor_temperature:{data[0]}, motor_controller_temperature:{data[1]}, rpm:{data[2]}, throttle:{data[3]},\npack_current:{data[4]}, pack_voltage:{data[5]}, charge:{data[6]},\nbattery_max_temperature:{data[7]}, label_data_battery_min_temperature:{data[8]},\nmfr:{data[9]}, bps:{data[10]}, ac current:{data[11]}, dc current:{data[12]}, speed:{data[13]},\nmc_faults:{fault_list[0]},\nbms_faults:{fault_list[1]}"
+        #logging.info(data_to_be_logged)
         
 
         #----------------------------------------------display values update----------------------------------------------
+        # data order - 0. motor temp  1.mc temp  2.erpm  3.throttle  4.pack current  5.pack voltage  6.charge  7.battery max temp
+        #              8.battery min temp  9.mfr  10.bps  11.ac current  12.dc current  13.speed
         label_data_motor_temperature.config(text = data[0])
         label_data_motor_controller_temperature.config(text = data[1])
         label_data_throttle.config(text = data[3])
@@ -296,8 +340,9 @@ def update_data():
         label_data_battery_max_temperature.config(text = data[7])
         label_data_battery_min_temperature.config(text = data[8])
         label_data_mfr.config(text = data[9])
-        label_data_bps.config(text = data[10])
-        
+        label_data_bps.config(text = data[9])
+        label_data_AC_current.config(text = data[8])
+        label_data_DC_current.config(text = data[7])
         #----------------------------------------------display speed and rpm values update----------------------------------------------
         #becomes useless after speedometer introduction
         # label_data_speed.config(text = current_vehicle_calculated_speed)
@@ -309,11 +354,15 @@ def update_data():
         
         label_data_all_faults.config(text = combined_faults_string_arranged)
         #----------------------------------------------gather data to be displayed by graphs----------------------------------------------
-        plot_1_data.append(int(data[3]))
-        plot_2_data.append(int(data[4]))
-        plot_3_data.append(int(data[5]))
+        plot_1_data.append(int(float(data[4])))
+        plot_2_data.append(int(float(data[4])))
+        plot_3_data.append(int(float(data[4])))
+    
         #remember to delete first entry of above lists else the list will become very big
-        
+        del plot_1_data[0]
+        del plot_2_data[0]
+        del plot_3_data[0]
+
         #should i convert these 3 functions into 1?
         def plot_graph_1():  
             #plot_1_data = "1,3,2,5,4"  # Get data from user input
@@ -403,17 +452,22 @@ def update_data():
         
         def update_speed():
             speedometer_canvas.delete("speedometer_dial_pointer")
-            current_speed = current_vehicle_calculated_speed
+            current_speed = int(float(data[4]))
             
             speedometer_canvas.create_arc(0, 0, 2*speedometer_radius, 2*speedometer_radius, fill="red2", start=180-(2*current_speed)-1, extent=2, outline="black",width="1", tags="speedometer_dial_pointer")
-
         def update_rpm():
             rpm_dial_canvas.delete("rpm_dial_pointer")
-            current_erpm = int(data[2])
+            current_erpm =  int(round((int(data[4]))/100, 0))
             
             rpm_dial_canvas.create_arc(0, 0, 2*rpm_dial_radius, 2*rpm_dial_radius, fill="red2", start=180-current_erpm-1, extent=2, outline="black",width="1", tags="rpm_dial_pointer")
         
-        def toggle_visibility():
+        def update_throttle_bar():
+            throttle_canvas.delete("throttle_black_fill")
+            throttle_percentage = int(float(data[4]))
+            throttle_canvas.create_rectangle(int(round((screen_width * (((throttle_percentage)*986)+64800))/273600, 0))+1, int(round((screen_height * 2)/200, 0))+1, int(round((screen_width * ((100*986)+64800))/273600, 0))-1, int(round((screen_height * 1)/25, 0))-1,fill="black", outline="",width="1", tags="throttle_black_fill")
+
+        
+        def toggle_visibility_fault_text():
             if bg_canvas_pg1.itemcget(faults_header_text, 'state') == 'hidden':
                 bg_canvas_pg1.itemconfigure(faults_header_text, state='normal')
             else:
@@ -423,7 +477,7 @@ def update_data():
         faults_header_text_disappearence_counter = faults_header_text_disappearence_counter + 1
         if faults_header_text_disappearence_counter == 5:
             faults_header_text_disappearence_counter = 0
-            toggle_visibility()
+            toggle_visibility_fault_text()
 
         
         plot_graph_1()
@@ -431,10 +485,11 @@ def update_data():
         plot_graph_3()
         update_speed()
         update_rpm()
+        update_throttle_bar()
         
-        root.after(200, update_data) 
-update_data()
-
+    root.after(1, update_data) 
+#update_data()
+root.after(1, update_data) 
 
 
 root.mainloop()

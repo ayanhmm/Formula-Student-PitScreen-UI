@@ -1,1 +1,1 @@
-60
+speedometer_canvas.create_text(speedometer_canvas_width/2, speedometer_canvas_height - int(round((screen_height * 1)/45, 0)), text="SPEED", font=("areal black", int(round((screen_height * 1)/46, 0))), fill="white")
