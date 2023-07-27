@@ -1,4 +1,4 @@
-# Formula Student Dashboard GUI
+# Formula Student Pit Screen GUI
  GUI to display the data obtained from various sensors on the pit screen for the crew to observe any anomalies as well as log it for future references
 
 ## Pre Requirements::
@@ -54,4 +54,10 @@ The following data is being displayed on the PIT screen.It is to be notes that t
 13. Motor Controller Input Current
 14. Motor Controller FAULTS
 15. BMS FAULTS
-<img src="./resources/readme images/working ui.png" alt="PIT display" />
+<img src="./resources/readme images/working pit ui.png" alt="PIT display" />
+
+## Graph Logging:
+**get logged data as graph.py** is a python program to take the logged data and plot it as a graph so as to make it easiar to study the logged data.Is is also capable of plotting the data of more than one sensor on the same canvas so as to conviniently study the simultaneous behaviors of differsnt datasets
+<img src="./resources/readme images/graph logging.png" alt="graph plot" />
+
+
