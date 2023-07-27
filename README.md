@@ -38,7 +38,7 @@ This is a list of some errors that were faced during implementation of the pytho
 
 
 ## Data Displayed:
-The following data is being displayed on the dashboard screen.It is to be notes that the data must also be recieved from the arduino in form of a string separated by comas and in the same order as written below.
+The following data is being displayed on the PIT screen.It is to be notes that the data must also be recieved from the arduino in form of a string separated by comas and in the same order as written below.
 1. Motor Temperature
 2. Motor Controller Temperature
 3. ERPM
